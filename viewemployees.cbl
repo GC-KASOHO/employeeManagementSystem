@@ -58,8 +58,5 @@
            ACCEPT CONTINUE-FLAG.
 
        CLEAR-SCREEN.
-           CALL 'SYSTEM' USING 'clear'
-           IF RETURN-CODE NOT = 0
-               CALL 'SYSTEM' USING 'cls'
-           END-IF.
+           CALL 'SYSTEM' USING 'cls'.
            
