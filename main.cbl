@@ -27,7 +27,7 @@
                DISPLAY "5. Delete Employee"
                DISPLAY "6. Exit"
                DISPLAY "-------------------------------------------"
-               DISPLAY "Enter your choice: "
+               DISPLAY "Enter your choice: " WITH NO ADVANCING
                ACCEPT USER-CHOICE
                
                EVALUATE USER-CHOICE
