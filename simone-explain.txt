@@ -1,0 +1,203 @@
+IDENTIFICATION DIVISION.
+PROGRAM-ID. DeleteEmployee.
+
+ -IDENTIFICATION DIVISION: The first division in a COBOL program. 
+  It specifies metadata about the program.
+ -PROGRAM-ID. DeleteEmployee: Assigns the program a unique identifier, DeleteEmployee. 
+  This is the name of the program.
+
+##########################################################################################
+
+ENVIRONMENT DIVISION.
+INPUT-OUTPUT SECTION.
+FILE-CONTROL.
+    SELECT EMPLOYEE-FILE ASSIGN TO "employees.dat"
+        ORGANIZATION IS LINE SEQUENTIAL
+        FILE STATUS IS FILE-STATUS.
+    SELECT TEMP-FILE ASSIGN TO "temp.dat"
+        ORGANIZATION IS LINE SEQUENTIAL
+        FILE STATUS IS TEMP-STATUS.
+
+
+  -INPUT-OUTPUT SECTION: Declares file usage and relationships between logical and physical files.
+  -FILE-CONTROL: Specifies how files are handled in the program.
+  -SELECT EMPLOYEE-FILE ASSIGN TO "employees.dat":
+    -Declares EMPLOYEE-FILE as a logical name for the physical file employees.dat.
+    -This file stores employee records.
+  -ORGANIZATION IS LINE SEQUENTIAL:
+     -Indicates that the file is a text file, with each record on a separate line.
+  -FILE STATUS IS FILE-STATUS:
+     -Declares FILE-STATUS to capture the file operation result (e.g., success, errors).
+  -SELECT TEMP-FILE ASSIGN TO "temp.dat":
+     -Declares TEMP-FILE as a logical name for the physical file temp.dat.
+     -This temporary file is used to store updated records during the deletion process.
+  -FILE STATUS IS TEMP-STATUS:
+     -Declares TEMP-STATUS to capture the status of operations on TEMP-FILE.
+
+############################################################################################################
+
+
+FD EMPLOYEE-FILE.
+01 EMPLOYEE-RECORD.
+    05 EMPLOYEE-ID       PIC 9(5).
+    05 EMPLOYEE-NAME     PIC X(30).
+    05 EMPLOYEE-AGE      PIC 9(2).
+
+FD TEMP-FILE.
+01 TEMP-RECORD.
+    05 TEMP-ID          PIC 9(5).
+    05 TEMP-NAME        PIC X(30).
+    05 TEMP-AGE         PIC 9(2).
+
+
+
+- FD EMPLOYEE-FILE: Describes the structure of the file employees.dat.
+- 01 EMPLOYEE-RECORD: Top-level data structure for a single employee record.
+- 05 EMPLOYEE-ID PIC 9(5): A 5-digit numeric field for the employee ID.
+- 05 EMPLOYEE-NAME PIC X(30): A 30-character alphanumeric field for the employee's name.
+- 05 EMPLOYEE-AGE PIC 9(2): A 2-digit numeric field for the employee's age.
+- FD TEMP-FILE: Describes the structure of the file temp.dat, which mirrors the structure of employees.dat.
+
+
+#############################################################################################################
+
+
+WORKING-STORAGE SECTION.
+01 FILE-STATUS          PIC XX.
+01 TEMP-STATUS         PIC XX.
+01 SEARCH-ID           PIC 9(5).
+01 FOUND-FLAG          PIC X VALUE "N".
+01 END-OF-FILE         PIC X VALUE "N".
+01 CONTINUE-FLAG       PIC X.
+01 WS-COPY-STATUS      PIC S9(9) USAGE BINARY.
+01 WS-DELETE-STATUS    PIC S9(9) USAGE BINARY.
+01 WS-OLD-FILENAME     PIC X(255) VALUE "temp.dat".
+01 WS-NEW-FILENAME     PIC X(255) VALUE "employees.dat".
+
+
+
+ -FILE-STATUS and TEMP-STATUS:
+    -Stores the results of file operations.
+    -For example, "00" indicates success, while other values indicate errors.
+ -SEARCH-ID PIC 9(5):
+    -Stores the employee ID entered by the user to be deleted.
+ -FOUND-FLAG PIC X VALUE "N":
+    -Indicates whether the employee was found.
+    -Initial value is "N", meaning not found.
+ -END-OF-FILE PIC X VALUE "N":
+     -Indicates whether the program has reached the end of the file during reading.
+ -CONTINUE-FLAG PIC X:
+     -Used to pause execution and wait for user input.
+ -WS-COPY-STATUS and WS-DELETE-STATUS:
+     -Store the results of file copy and delete operations.
+ -WS-OLD-FILENAME and WS-NEW-FILENAME:
+    -Store the names of the temporary and main files.
+
+
+#####################################################################################################################
+
+
+PERFORM CLEAR-SCREEN
+DISPLAY "Enter Employee ID to delete: "
+ACCEPT SEARCH-ID
+
+ - Clears the screen and prompts the user for the employee ID.
+ - The input is stored in SEARCH-ID.
+
+ ##################################################################################################
+
+ IF SEARCH-ID IS NOT NUMERIC OR SEARCH-ID = ZEROS
+    DISPLAY "Invalid ID format. Must be 5 digits."
+    PERFORM PRESS-ENTER
+    EXIT PROGRAM
+END-IF.
+
+
+- Ensures the ID is numeric and not zero.
+- Displays an error message and exits if invalid.
+- To maintain realistic input: Employee IDs often start from 00001 or higher, 
+  meaning "00000" would never be assigned to any real employee.
+
+#####################################################################################################
+
+OPEN INPUT EMPLOYEE-FILE
+OPEN OUTPUT TEMP-FILE
+
+- Opens employees.dat for reading and temp.dat for writing.
+
+###################################################################################################
+
+PERFORM UNTIL END-OF-FILE = "Y"
+    READ EMPLOYEE-FILE INTO EMPLOYEE-RECORD
+        AT END
+            MOVE "Y" TO END-OF-FILE
+        NOT AT END
+            IF EMPLOYEE-ID = SEARCH-ID
+                MOVE "Y" TO FOUND-FLAG
+                DISPLAY "Employee found and will be deleted:"
+                DISPLAY "ID: " EMPLOYEE-ID
+                DISPLAY "Name: " EMPLOYEE-NAME
+                DISPLAY "Age: " EMPLOYEE-AGE
+            ELSE
+                MOVE EMPLOYEE-RECORD TO TEMP-RECORD
+                WRITE TEMP-RECORD
+            END-IF
+    END-READ
+END-PERFORM.
+
+
+- Reads each record from employees.dat.
+- If the employee ID matches SEARCH-ID, the record is skipped.
+- Otherwise, the record is written to temp.dat.
+
+#######################################################################################################
+
+CLOSE EMPLOYEE-FILE
+CLOSE TEMP-FILE
+
+- Closes both files after processing.
+
+#######################################################################################################
+
+IF FOUND-FLAG = "N"
+    DISPLAY "Employee not found!"
+ELSE
+    CALL "CBL_DELETE_FILE" USING WS-NEW-FILENAME
+        RETURNING WS-DELETE-STATUS
+    CALL "CBL_COPY_FILE" USING 
+        WS-OLD-FILENAME 
+        WS-NEW-FILENAME
+        RETURNING WS-COPY-STATUS
+    IF WS-COPY-STATUS = 0
+        CALL "CBL_DELETE_FILE" USING WS-OLD-FILENAME
+        DISPLAY "Employee record deleted successfully!"
+    ELSE
+        DISPLAY "Error deleting record!"
+    END-IF
+END-IF.
+
+
+- Deletes employees.dat.
+- Copies temp.dat to replace it.
+- Deletes temp.dat.
+
+##########################################################################################################
+PERFORM PRESS-ENTER
+
+- Waits for user input before exiting.
+
+##########################################################################################################
+
+CALL 'SYSTEM' USING 'cls'.
+
+- Clears the terminal screen by calling the system's cls command.
+
+########################################################################################################
+
+DISPLAY "Press Enter to continue..."
+ACCEPT CONTINUE-FLAG.
+
+- Displays a message and waits for the user to press Enter.
+
+########################################################################################################
+

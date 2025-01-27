@@ -4,7 +4,7 @@
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
-           SELECT EMPLOYEE-FILE ASSIGN TO "employees.dat"
+           SELECT EMPLOYEE-FILE ASSIGN TO "employees.dat"                 
                ORGANIZATION IS LINE SEQUENTIAL
                FILE STATUS IS FILE-STATUS.
            SELECT TEMP-FILE ASSIGN TO "temp.dat"
