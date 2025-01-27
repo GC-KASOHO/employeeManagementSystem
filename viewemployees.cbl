@@ -18,8 +18,9 @@
 
        WORKING-STORAGE SECTION.
        01 FILE-STATUS          PIC XX.
-       01 END-OF-FILE         PIC X VALUE "N".
-       01 CONTINUE-FLAG       PIC X.
+       01 END-OF-FILE          PIC X VALUE "N".
+       01 CONTINUE-FLAG        PIC X.
+       01 TABLE-LINE           PIC X(50) VALUE ALL "-".
 
        PROCEDURE DIVISION.
        MAIN-LOGIC.
@@ -33,23 +34,24 @@
                EXIT PROGRAM
            END-IF.
 
-           DISPLAY "-------------------------------------------"
-           DISPLAY "ID      Name                           Age"
-           DISPLAY "-------------------------------------------"
+           DISPLAY "+-------+----------------------+-----+"
+           DISPLAY "|   ID  | Name                 | Age |"
+           DISPLAY "+-------+----------------------+-----+"
            
            PERFORM UNTIL END-OF-FILE = "Y"
                READ EMPLOYEE-FILE INTO EMPLOYEE-RECORD
                    AT END
                        MOVE "Y" TO END-OF-FILE
                    NOT AT END
-                       DISPLAY EMPLOYEE-ID SPACE 
-                               EMPLOYEE-NAME SPACE 
-                               EMPLOYEE-AGE
+                       DISPLAY "| " EMPLOYEE-ID
+                               " | " EMPLOYEE-NAME(1:20)
+                               " | " EMPLOYEE-AGE
+                               "  |"
                END-READ
            END-PERFORM.
            
            CLOSE EMPLOYEE-FILE
-           DISPLAY "-------------------------------------------"
+           DISPLAY "+-------+----------------------+-----+"
            PERFORM PRESS-ENTER
            EXIT PROGRAM.
 
@@ -59,4 +61,10 @@
 
        CLEAR-SCREEN.
            CALL 'SYSTEM' USING 'cls'.
+
+
+
+
+
+
            
