@@ -55,4 +55,3 @@
 
        CLEAR-SCREEN.
            CALL 'SYSTEM' USING 'CLS'.
-           
